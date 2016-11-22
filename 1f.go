@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,9 +16,22 @@ import (
 	"runtime"
 	"strings"
 	"net/smtp"
+	"crypto/rand"
+	"crypto/cipher"
+	"crypto/aes"
 
 	"github.com/fatih/color"
 	"github.com/garyburd/go-oauth/oauth"
+)
+
+var (
+	PasswordString = "1[Nq2-6sK@JX3/8skaZX<R4s>aO}7|50"
+
+	account  = flag.String("a", "", "account")
+	list     = flag.String("l", "", "show list tweets")
+	dotweet  = flag.String("t", "", "tweet message")
+	asjson   = flag.Bool("json", false, "show tweets as json")
+	verbose  = flag.Bool("v", false, "detail display")
 )
 
 type Account struct {
@@ -291,21 +305,22 @@ func getConfig() (string, map[string]string, error) {
 		config["ClientToken"] = "xJmZPMsbYBOe39OU33buDnnkw"
 		config["ClientSecret"] = "FYsQdPqPNn0MHHI953LgBY2XLDY1Om0ufy7q7SPoSOXQchn9tP"
 	} else {
-		err = json.Unmarshal(b, &config)
+		// decrypt
+		key := []byte(PasswordString)
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		decryptedText := make([]byte, len(b[aes.BlockSize:]))
+		decryptStream := cipher.NewCTR(block, b[:aes.BlockSize])
+		decryptStream.XORKeyStream(decryptedText, b[aes.BlockSize:])
+		err = json.Unmarshal(decryptedText, &config)
 		if err != nil {
 			return "", nil, fmt.Errorf("could not unmarshal %v: %v", file, err)
 		}
 	}
 	return file, config, nil
 }
-
-var (
-	account  = flag.String("a", "", "account")
-	list     = flag.String("l", "", "show list tweets")
-	dotweet  = flag.String("t", "", "tweet message")
-	asjson   = flag.Bool("json", false, "show tweets as json")
-	verbose  = flag.Bool("v", false, "detail display")
-)
 
 func loadConfigData() *oauth.Credentials {
 	file, config, err := getConfig()
@@ -317,11 +332,26 @@ func loadConfigData() *oauth.Credentials {
 		log.Fatal("faild to get access token:", err)
 	}
 	if authorized {
-		b, err := json.MarshalIndent(config, "", "  ")
+		b, err := json.Marshal(config)
 		if err != nil {
 			log.Fatal("failed to store file:", err)
 		}
-		err = ioutil.WriteFile(file, b, 0700)
+		// create encrypt key
+		key := []byte(PasswordString)
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Create IV
+		cipherText := make([]byte, aes.BlockSize+len(b))
+		iv := cipherText[:aes.BlockSize]
+		if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+			log.Fatal(err)
+		}
+		// encrypt
+		encryptStream := cipher.NewCTR(block, iv)
+		encryptStream.XORKeyStream(cipherText[aes.BlockSize:], b)
+		err = ioutil.WriteFile(file, cipherText, 0700)
 		if err != nil {
 			log.Fatal("failed to store file:", err)
 		}
