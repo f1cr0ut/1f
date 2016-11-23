@@ -276,11 +276,11 @@ func getConfig() (string, map[string]string, error) {
 	if dir == "" && runtime.GOOS == "windows" {
 		dir = os.Getenv("APPDATA")
 		if dir == "" {
-			dir = filepath.Join(os.Getenv("USERPROFILE"), "Application Data", "dailyTW")
+			dir = filepath.Join(os.Getenv("USERPROFILE"), "Application Data", "1f")
 		}
-		dir = filepath.Join(dir, "dailyTW")
+		dir = filepath.Join(dir, "1f")
 	} else {
-		dir = filepath.Join(dir, ".config", "dailyTW")
+		dir = filepath.Join(dir, ".config", "1f")
 	}
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", nil, err
