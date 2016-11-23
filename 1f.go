@@ -26,12 +26,11 @@ import (
 )
 
 var (
-	PasswordString = "1[Nq2-6sK@JX3/8skaZX<R4s>aO}7|50" // must be 8 or 16 or 32 bytes
+	PasswordString = "1[Nq2-6sK@JX3/8skaZX<R4s>aO}7|50" // must be 16, 24 or 32 bytes
 
 	account  = flag.String("a", "", "account")
 	list     = flag.String("l", "", "show list tweets")
 	dotweet  = flag.String("t", "", "tweet message")
-	asjson   = flag.Bool("json", false, "show tweets as json")
 	verbose  = flag.Bool("v", false, "detail display")
 )
 
@@ -239,12 +238,7 @@ var replacer = strings.NewReplacer(
 )
 
 func showTweets(tweets []Tweet, verbose bool) {
-	if *asjson {
-		for _, tweet := range tweets {
-			json.NewEncoder(os.Stdout).Encode(tweet)
-			os.Stdout.Sync()
-		}
-	} else if verbose {
+	if verbose {
 		for i := len(tweets) - 1; i >= 0; i-- {
 			name := tweets[i].User.Name
 			user := tweets[i].User.ScreenName
@@ -387,11 +381,14 @@ func (m *Mail)Send() error {
 
 func main() {
 	flag.Parse()
-	fmt.Printf("pass?\n")
+	fmt.Printf("password?\n")
 
 	password, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 			log.Fatal(err)
+	}
+	if l := len(password); l != 16 && l != 24 && l != 32 {
+		log.Fatal("invalid password length. it must be 16, 24 or 32 bytes")
 	}
 	PasswordString = string(password)
 
