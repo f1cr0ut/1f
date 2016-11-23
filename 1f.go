@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/smtp"
 	"net/url"
 	"os"
 	"os/exec"
@@ -347,36 +346,6 @@ func loadConfigData() *oauth.Credentials {
 		}
 	}
 	return token
-}
-
-type Mail struct {
-	password string
-	title string
-	from string
-	to string
-	body string
-}
-
-func (m *Mail)Send() error {
-	auth := smtp.PlainAuth(
-		"",
-		m.from,
-		m.password,
-		"smtp.gmail.com",
-	)
-	b := "To:" + m.to;
-	b += "\r\n";
-	b += "Subject:" + m.title;
-	b += "\r\n";
-	b += m.body;
-	err := smtp.SendMail(
-		"smtp.gmail.com:587",
-		auth,
-		m.from,
-		[]string{m.to},
-		[]byte(b),
-	)
-	return err
 }
 
 func main() {
