@@ -2,6 +2,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -9,23 +12,21 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/smtp"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"net/smtp"
-	"crypto/rand"
-	"crypto/cipher"
-	"crypto/aes"
-
+	"syscall"
 	"github.com/fatih/color"
 	"github.com/garyburd/go-oauth/oauth"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
-	PasswordString = "1[Nq2-6sK@JX3/8skaZX<R4s>aO}7|50"
+	PasswordString = "1[Nq2-6sK@JX3/8skaZX<R4s>aO}7|50" // must be 8 or 16 or 32 bytes
 
 	account  = flag.String("a", "", "account")
 	list     = flag.String("l", "", "show list tweets")
@@ -228,11 +229,6 @@ func rawCall(token *oauth.Credentials, method string, uri string, opt map[string
 	if res == nil {
 		return nil
 	}
-	/*
-	if *debug {
-		return json.NewDecoder(io.TeeReader(resp.Body, os.Stdout)).Decode(&res)
-	}
-	*/
 	return json.NewDecoder(resp.Body).Decode(&res)
 }
 
@@ -391,6 +387,14 @@ func (m *Mail)Send() error {
 
 func main() {
 	flag.Parse()
+	fmt.Printf("pass?\n")
+
+	password, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+			log.Fatal(err)
+	}
+	PasswordString = string(password)
+
 	token := loadConfigData()
 
 	if len(*list) > 0 {
