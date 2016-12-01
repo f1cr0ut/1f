@@ -350,7 +350,7 @@ func loadConfigData() *oauth.Credentials {
 
 func main() {
 	flag.Parse()
-	fmt.Printf("password?\n")
+	fmt.Fprintf(os.Stderr, "password?\n")
 
 	password, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
