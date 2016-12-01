@@ -31,6 +31,7 @@ var (
 	list     = flag.String("l", "", "show list tweets")
 	dotweet  = flag.String("t", "", "tweet message")
 	verbose  = flag.Bool("v", false, "detail display")
+	colorMode = flag.Bool("c", false, "coloring(default off)")
 )
 
 type Account struct {
@@ -151,9 +152,13 @@ func clientAuth(requestToken *oauth.Credentials) (*oauth.Credentials, error) {
 	} else if runtime.GOOS == "plan9" {
 		browser = "plumb"
 	}
-	color.Set(color.FgHiRed)
+	if *colorMode {
+		color.Set(color.FgHiRed)
+	}
 	fmt.Println("Open this URL and enter PIN.")
-	color.Set(color.Reset)
+	if *colorMode {
+		color.Set(color.Reset)
+	}
 	fmt.Println(url)
 	browser, err = exec.LookPath(browser)
 	if err == nil {
@@ -243,9 +248,13 @@ func showTweets(tweets []Tweet, verbose bool) {
 			user := tweets[i].User.ScreenName
 			text := tweets[i].Text
 			text = replacer.Replace(text)
-			color.Set(color.FgHiRed)
+			if *colorMode {
+				color.Set(color.FgHiRed)
+			}
 			fmt.Println(user + ": " + name)
-			color.Set(color.Reset)
+			if *colorMode {
+				color.Set(color.Reset)
+			}
 			fmt.Println("  " + text)
 			fmt.Println("  " + tweets[i].Identifier)
 			fmt.Println("  " + tweets[i].CreatedAt)
@@ -255,9 +264,13 @@ func showTweets(tweets []Tweet, verbose bool) {
 		for i := len(tweets) - 1; i >= 0; i-- {
 			user := tweets[i].User.ScreenName
 			text := tweets[i].Text
-			color.Set(color.FgHiRed)
+			if *colorMode {
+				color.Set(color.FgHiRed)
+			}
 			fmt.Print(user)
-			color.Set(color.Reset)
+			if *colorMode {
+				color.Set(color.Reset)
+			}
 			fmt.Print(": ")
 			fmt.Println(text)
 		}
